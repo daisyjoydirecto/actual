@@ -338,6 +338,7 @@ function parseDateCell(v, md) {
   return { y, m: a, d: b };
 }
 
+const RET = /RETURN|ILIS|WA?LA\s*GI\s*APIL|NOT\s*INCLUDED|DILI\s*APIL|REJECT/i;
 async function readFile(file) {
   const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
   const ws = wb.Sheets[wb.SheetNames[0]];
@@ -350,13 +351,15 @@ async function readFile(file) {
   aoa.slice(1).forEach(r => {
     const w = parseFloat(String(r[iw]).replace(/,/g, ''));
     const extra = r.filter((x, i) => i > Math.max(iw, id, it) && String(x).trim()).join(' ').trim();
-    if (isNaN(w)) { if (extra && readings.length) readings[readings.length - 1].note = (readings[readings.length - 1].note + ' ' + extra).trim(); return; }
+    if (isNaN(w)) { if (extra && readings.length) { const p = readings[readings.length - 1]; p.note = (p.note + ' ' + extra).trim();
+        if (RET.test(p.note)) { p.counted = false; p.flag = 'Returned / replacement hog — not counted'; } } return; }
     const d = parseDateCell(r[id], nm.md); if (d) dt = dt || d;
     let t = r[it]; if (typeof t === 'number') t = XLSX.SSF.format('h:mm:ss AM/PM', t);
     const x = { w, time: String(t || '').trim(), note: extra, counted: true, flag: '' };
     if (w < 10) { x.counted = false; x.flag = 'Looks like a scale misread'; }
     else if (!x.time && !d) x.flag = 'No date/time — added by hand';
     else if (extra) x.flag = 'Has a note';
+    if (RET.test(extra)) { x.counted = false; x.flag = 'Returned / replacement hog — not counted'; }
     if (w > 250) { x.counted = false; x.flag = 'Unusually heavy — check'; }
     readings.push(x);
   });
