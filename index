@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hog Weight Band Summary</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e2da;--soft:#f3f1ec;--b0:#9ca3af;--b1:#3b82f6;--b2:#10b981;--b3:#f59e0b;--acc:#7c2d12;--ok:#15803d;--bad:#b91c1c;--warn:#fef3c7}
+@media (prefers-color-scheme:dark){:root{--bg:#16181b;--card:#1f2226;--ink:#e8e6e1;--mute:#9aa0a6;--line:#33373c;--soft:#26292e;--acc:#fdba74;--warn:#3b2f12}}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 14px 60px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+h1{font-size:21px;margin:0}.sub{color:var(--mute);margin:2px 0 0;font-size:13px}
+button,select,input{font:inherit;color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--mute)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.filters label{font-size:12px;color:var(--mute);display:flex;flex-direction:column;gap:2px}
+.filters input,.filters select,.fld input,.fld select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 8px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;border-top:4px solid var(--c,var(--acc))}
+.kpi .l{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .v{font-size:24px;font-weight:700}.kpi .s{color:var(--mute);font-size:12px}
+.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:4px 0 16px;background:var(--line)}
+.bar div{height:100%}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;align-items:center}
+.tabs .btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tools{display:flex;gap:6px;margin-left:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--mute);font-weight:600;background:var(--card);position:sticky;top:0;z-index:1}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:2}
+th.bh{border-bottom:3px solid var(--bc)}
+tr.lv0 td{font-weight:700}tr.lv1 td{font-weight:600}
+tr.lv1 td:first-child{padding-left:28px}tr.lv2 td:first-child{padding-left:48px}tr.lv3 td:first-child{padding-left:68px;color:var(--mute);font-weight:400}
+tr.tot td{font-weight:800;border-top:2px solid var(--ink);background:var(--soft)}
+tr.hasKids td:first-child{cursor:pointer}
+.tg{display:inline-block;width:16px;color:var(--mute)}
+.k{display:block;font-size:11px;color:var(--mute);font-weight:400}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.notes{color:var(--mute);font-size:12px;margin-top:12px}
+.hidden{display:none!important}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;background:var(--card);cursor:pointer}
+.drop.over{border-color:var(--b1)}
+.drop b{display:block;font-size:16px;margin-bottom:4px}
+.lc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}
+.lc.dup{border-color:var(--bad)}
+.lc h3{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fld{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.fld label{font-size:11px;color:var(--mute);display:flex;flex-direction:column;gap:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--soft)}
+.flag{background:var(--warn);border-radius:8px;padding:6px 8px;margin-top:6px;font-size:12px;display:flex;gap:8px;align-items:flex-start}
+.msg{padding:10px 12px;border-radius:10px;margin-bottom:12px;background:var(--soft)}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);max-width:520px;width:calc(100% - 24px)}
+dialog::backdrop{background:#0006}
+.muted{color:var(--mute)}
+@media (max-width:640px){
+  h1{font-size:18px}
+  .kpi .v{font-size:20px}
+  th,td{padding:7px 8px;font-size:13px}
+  tr.lv1 td:first-child{padding-left:18px}tr.lv2 td:first-child{padding-left:30px}tr.lv3 td:first-child{padding-left:42px}
+  .tools{margin-left:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>Hog Weight Band Summary</h1><p class="sub" id="sub">Loading…</p></div>
+  <div class="row">
+    <button class="btn" id="bRefresh">↻ Refresh</button>
+    <button class="btn" id="bExcel">⬇ Excel</button>
+    <button class="btn" id="bSettings">⚙ Settings</button>
+  </div>
+</header>
+
+<div id="msg"></div>
+
+<div class="filters row">
+  <label>From <input type="date" id="fFrom"></label>
+  <label>To <input type="date" id="fTo"></label>
+  <label>Farm <select id="fFarm"><option value="">All farms</option></select></label>
+  <label>Customer <select id="fCust"><option value="">All customers</option></select></label>
+  <button class="btn sm" id="bClear" style="align-self:flex-end">Clear</button>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="btn on" data-v="band">Weight bands</button>
+  <button class="btn" data-v="cust">By farm &amp; customer</button>
+  <button class="btn" data-v="date">By date</button>
+  <button class="btn" data-v="loads">Loads</button>
+  <button class="btn pri" data-v="upload">＋ Upload</button>
+</div>
+
+<section id="vSummary">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar" id="bar"></div>
+  <div class="tabs" id="tools">
+    <span class="muted" style="font-size:12px">Show</span>
+    <button class="btn sm on" data-m="hd">Heads + kg</button>
+    <button class="btn sm" data-m="pct">% of heads</button>
+    <div class="tools"><button class="btn sm" id="bExp">Expand all</button><button class="btn sm" id="bCol">Collapse all</button></div>
+  </div>
+  <div class="card"><table id="t"></table></div>
+  <p class="notes">Bands: 90–120 kg = 90.0 to 120.0 · 121–130 kg = above 120 up to 130.0 · 131+ kg = above 130 · hogs under 90 kg are shown separately. Readings marked "not counted" at upload are left out.</p>
+</section>
+
+<section id="vLoads" class="hidden">
+  <div class="card"><table id="tl"></table></div>
+</section>
+
+<section id="vUpload" class="hidden">
+  <div class="drop" id="drop">
+    <b>Drop scale files here or tap to choose</b>
+    <span class="muted">.xls / .xlsx / .csv from the hog scale (VID, Weight, Date, Time). Several files at once is fine.</span>
+    <input type="file" id="file" multiple accept=".xls,.xlsx,.csv" class="hidden">
+  </div>
+  <div class="row" style="margin-top:12px">
+    <label class="muted" style="font-size:12px">Farm for these files
+      <select id="upFarm" class="btn" style="border-radius:8px"></select></label>
+    <button class="btn sm" id="bNewFarm">＋ Add farm</button>
+  </div>
+  <div id="pending"></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn pri" id="bSave" disabled>Save to Google Sheet</button>
+    <button class="btn" id="bDiscard" disabled>Discard</button>
+    <span class="muted" id="pendInfo"></span>
+  </div>
+</section>
+</div>
+
+<dialog id="dlgSet">
+  <h3 style="margin-top:0">Settings</h3>
+  <p class="muted" style="font-size:13px">Paste the Web app URL from your Apps Script deployment (ends in <code>/exec</code>).</p>
+  <input id="sUrl" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card)" placeholder="https://script.google.com/macros/s/…/exec">
+  <div class="row" style="margin-top:12px;justify-content:flex-end">
+    <button class="btn" id="sCancel">Cancel</button><button class="btn pri" id="sSave">Save</button>
+  </div>
+</dialog>
+
+<dialog id="dlgEdit">
+  <h3 style="margin-top:0">Edit load</h3>
+  <div class="fld">
+    <label>Date <input type="date" id="eDate"></label>
+    <label>Farm <input id="eFarm" list="dlFarms"></label>
+    <label>Customer <input id="eCust" list="dlCusts"></label>
+    <label>Truck / load <input id="eTruck"></label>
+  </div>
+  <div class="row" style="margin-top:14px;justify-content:space-between">
+    <button class="btn danger" id="eDel">Delete load</button>
+    <div class="row"><button class="btn" id="eCancel">Cancel</button><button class="btn pri" id="eSave">Save</button></div>
+  </div>
+</dialog>
+<datalist id="dlFarms"></datalist><datalist id="dlCusts"></datalist>
+
+<script>
+/* ===== CONFIG: paste your Apps Script /exec URL here so every device uses it ===== */
+const DEFAULT_API_URL = '';
+/* ================================================================================= */
+
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v } catch (e) { return d } },
+                set(k, v) { try { localStorage.setItem(k, v) } catch (e) {} } };
+let API = store.get('hwb_api', '') || DEFAULT_API_URL;
+
+const B = [
+  { k: 'b0', n: 'Below 90 kg', s: 'Below 90', c: 'var(--b0)', t: w => w < 90 },
+  { k: 'b1', n: '90–120 kg', s: '90–120', c: 'var(--b1)', t: w => w >= 90 && w <= 120 },
+  { k: 'b2', n: '121–130 kg', s: '121–130', c: 'var(--b2)', t: w => w > 120 && w <= 130 },
+  { k: 'b3', n: '131+ kg', s: '131+', c: 'var(--b3)', t: w => w > 130 }
+];
+const band = w => B.find(b => b.t(w)).k;
+const fmt = (n, d = 0) => (+n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dlab = s => { const [y, m, d] = s.split('-'); return new Date(+y, m - 1, +d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) };
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const norm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+let ALL = [];          // every reading from the sheet: {id,d,f,c,l,w,t,cnt,note,file,key}
+let view = 'band', mode = 'hd', open = new Set();
+let pending = [];      // parsed loads waiting to be saved
+
+function msg(text, cls = '') { $('msg').innerHTML = text ? `<div class="msg ${cls}">${text}</div>` : ''; }
+
+/* ---------- data loading ---------- */
+async function load() {
+  if (!API) { $('sub').textContent = 'Not connected — open ⚙ Settings and paste your Apps Script URL.'; render(); return; }
+  $('sub').textContent = 'Loading from Google Sheet…';
+  try {
+    const r = await fetch(API + '?t=' + Date.now());
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'Sheet error');
+    ALL = j.rows.map(r => ({ id: r[0], d: r[1], f: r[2], c: r[3], l: r[4], w: parseFloat(r[5]), t: r[6], cnt: r[7] === 'Yes', note: r[8], file: r[9], up: r[10], key: r[11] }))
+      .filter(r => r.id && !isNaN(r.w));
+    ALL.forEach(r => r.b = band(r.w));
+    msg('');
+  } catch (e) {
+    msg('Could not load the Google Sheet: ' + esc(e.message) + '. Check the URL in ⚙ Settings and that the web app is deployed for "Anyone".', 'err');
+  }
+  fillFilters(); render();
+}
+
+function fillFilters() {
+  const farms = [...new Set(ALL.map(r => r.f))].sort(), custs = [...new Set(ALL.map(r => r.c))].sort();
+  const keep = (sel, list, all) => { const v = sel.value; sel.innerHTML = `<option value="">${all}</option>` + list.map(x => `<option>${esc(x)}</option>`).join(''); sel.value = list.includes(v) ? v : '' };
+  keep($('fFarm'), farms, 'All farms'); keep($('fCust'), custs, 'All customers');
+  const farmList = [...new Set([...farms, ...JSON.parse(store.get('hwb_farms', '["Kinate","Mapayag"]'))])].sort();
+  $('dlFarms').innerHTML = farmList.map(x => `<option value="${esc(x)}">`).join('');
+  $('dlCusts').innerHTML = custs.map(x => `<option value="${esc(x)}">`).join('');
+  const uf = $('upFarm'), v = uf.value || store.get('hwb_lastFarm', farmList[0] || 'Kinate');
+  uf.innerHTML = farmList.map(x => `<option>${esc(x)}</option>`).join(''); uf.value = farmList.includes(v) ? v : farmList[0];
+}
+
+function rows() {
+  const fr = $('fFrom').value, to = $('fTo').value, fa = $('fFarm').value, cu = $('fCust').value;
+  return ALL.filter(r => r.cnt && (!fr || r.d >= fr) && (!to || r.d <= to) && (!fa || r.f === fa) && (!cu || r.c === cu));
+}
+
+/* ---------- summary ---------- */
+function agg(rs) { const a = { n: rs.length, kg: 0 }; B.forEach(b => a[b.k] = { n: 0, kg: 0 }); rs.forEach(r => { a.kg += r.w; a[r.b].n++; a[r.b].kg += r.w }); return a }
+const grp = (rs, key) => { const m = new Map(); rs.forEach(r => { const v = key(r); m.has(v) || m.set(v, []); m.get(v).push(r) }); return m };
+const loadKey = r => r.id;
+const loadName = rs => { const r = rs[0]; return (r.l ? r.l : 'Load') + (r.t ? ' · ' + r.t.replace(/:\d\d (?=[AP]M)/, ' ') : '') };
+
+function cells(a) {
+  const bc = B.map(b => { const x = a[b.k];
+    if (mode === 'pct') return `<td>${x.n ? fmt(x.n / a.n * 100, 1) + '%' : '–'}</td>`;
+    return `<td>${x.n ? fmt(x.n) + `<span class="k">${fmt(x.kg, 1)} kg</span>` : '–'}</td>` }).join('');
+  return `<td>${fmt(a.n)}</td><td>${fmt(a.kg, 1)}</td><td>${a.n ? fmt(a.kg / a.n, 1) : '–'}</td>` + bc;
+}
+const head = first => `<tr><th>${first}</th><th>Heads</th><th>Total kg</th><th>Avg kg</th>${B.map(b => `<th class="bh" style="--bc:${b.c}">${b.n}</th>`).join('')}</tr>`;
+
+function tree(RS, levels) {
+  let html = '';
+  const isOpen = id => { const parts = id.split('|'); for (let i = 2; i <= parts.length; i++) if (!open.has(parts.slice(0, i).join('|'))) return false; return true };
+  (function walk(rs, depth, path) {
+    if (depth >= levels.length) return;
+    const L = levels[depth], m = grp(rs, L.key);
+    [...m.keys()].sort((a, b) => L.sort ? L.sort(a, b, m) : String(a).localeCompare(String(b))).forEach(v => {
+      const sub = m.get(v), id = path + '|' + v, kids = depth < levels.length - 1;
+      const vis = depth === 0 || isOpen(path);
+      html += `<tr class="lv${depth}${kids ? ' hasKids' : ''}" data-id="${esc(id)}" ${vis ? '' : 'hidden'}><td><span class="tg">${kids ? (open.has(id) ? '▾' : '▸') : ''}</span>${esc(L.lab(v, sub))}</td>${cells(agg(sub))}</tr>`;
+      walk(sub, depth + 1, id);
+    });
+  })(RS, 0, '');
+  return html;
+}
+const byFirstTime = (a, b, m) => (m.get(a)[0].d + m.get(a)[0].file).localeCompare(m.get(b)[0].d + m.get(b)[0].file);
+const LV = {
+  farm: { key: r => r.f, lab: v => v + ' Farm' },
+  cust: { key: r => r.c || '(no customer)', lab: v => v },
+  date: { key: r => r.d, lab: v => dlab(v) },
+  load: { key: loadKey, lab: (v, s) => loadName(s), sort: byFirstTime },
+  loadD: { key: loadKey, lab: (v, s) => loadName(s) + ' · ' + dlab(s[0].d).replace(/, \d{4}$/, ''), sort: byFirstTime }
+};
+
+function render() {
+  ['vSummary', 'vLoads', 'vUpload'].forEach(s => $(s).classList.add('hidden'));
+  if (view === 'upload') { $('vUpload').classList.remove('hidden'); return; }
+  if (view === 'loads') { $('vLoads').classList.remove('hidden'); renderLoads(); return; }
+  $('vSummary').classList.remove('hidden');
+  const R = rows(), T = agg(R);
+  const ds = [...new Set(R.map(r => r.d))].sort();
+  if (API) $('sub').textContent = R.length ? `${new Set(R.map(r => r.id)).size} loads · ${dlab(ds[0])} – ${dlab(ds[ds.length - 1])}` : 'No data for this filter yet — use ＋ Upload.';
+  $('kpis').innerHTML = `<div class="kpi"><div class="l">Total heads</div><div class="v">${fmt(T.n)}</div><div class="s">${fmt(T.kg, 1)} kg · avg ${T.n ? fmt(T.kg / T.n, 1) : '–'} kg</div></div>` +
+    B.map(b => `<div class="kpi" style="--c:${b.c}"><div class="l">${b.n}</div><div class="v">${fmt(T[b.k].n)}</div><div class="s">${T.n ? fmt(T[b.k].n / T.n * 100, 1) : 0}% · ${fmt(T[b.k].kg, 1)} kg</div></div>`).join('');
+  $('bar').innerHTML = T.n ? B.map(b => `<div title="${b.n}: ${T[b.k].n}" style="width:${T[b.k].n / T.n * 100}%;background:${b.c}"></div>`).join('') : '';
+  $('tools').querySelectorAll('#bExp,#bCol').forEach(x => x.classList.toggle('hidden', view === 'band'));
+  let h;
+  if (view === 'band') {
+    const farms = [...new Set(R.map(r => r.f))].sort();
+    h = `<tr><th>Weight band</th>${farms.map(f => `<th>${esc(f)}</th>`).join('')}<th>Total heads</th><th>Share</th><th>Total kg</th><th>Avg kg</th></tr>` +
+      B.map(b => { const rs = R.filter(r => r.b === b.k), a = agg(rs);
+        return `<tr class="lv0"><td><span class="sw" style="background:${b.c}"></span>${b.n}</td>${farms.map(f => `<td>${fmt(rs.filter(r => r.f === f).length)}</td>`).join('')}<td>${fmt(a.n)}</td><td>${T.n ? fmt(a.n / T.n * 100, 1) : 0}%</td><td>${fmt(a.kg, 1)}</td><td>${a.n ? fmt(a.kg / a.n, 1) : '–'}</td></tr>` }).join('') +
+      `<tr class="tot"><td>Total</td>${farms.map(f => `<td>${fmt(R.filter(r => r.f === f).length)}</td>`).join('')}<td>${fmt(T.n)}</td><td>${T.n ? '100%' : '–'}</td><td>${fmt(T.kg, 1)}</td><td>${T.n ? fmt(T.kg / T.n, 1) : '–'}</td></tr>`;
+  } else if (view === 'cust') {
+    h = head('Farm › Customer › Load') + tree(R, [LV.farm, LV.cust, LV.loadD]) + `<tr class="tot"><td>Grand total</td>${cells(T)}</tr>`;
+  } else {
+    h = head('Date › Farm › Customer › Load') + tree(R, [LV.date, LV.farm, LV.cust, LV.load]) + `<tr class="tot"><td>Grand total</td>${cells(T)}</tr>`;
+  }
+  $('t').innerHTML = h;
+}
+
+function renderLoads() {
+  const m = grp(ALL.filter(r => { const fr = $('fFrom').value, to = $('fTo').value, fa = $('fFarm').value, cu = $('fCust').value;
+    return (!fr || r.d >= fr) && (!to || r.d <= to) && (!fa || r.f === fa) && (!cu || r.c === cu) }), r => r.id);
+  const L = [...m.values()].sort((a, b) => (b[0].d + b[0].t).localeCompare(a[0].d + a[0].t));
+  $('tl').innerHTML = `<tr><th>Date</th><th style="text-align:left">Farm</th><th style="text-align:left">Customer</th><th style="text-align:left">Truck / load</th><th>Heads</th><th>Total kg</th><th>Avg kg</th>${B.map(b => `<th class="bh" style="--bc:${b.c}">${b.s}</th>`).join('')}<th>Not counted</th><th style="text-align:left">Source file</th><th></th></tr>` +
+    (L.length ? L.map(rs => { const c = rs.filter(r => r.cnt), a = agg(c), r = rs[0];
+      return `<tr><td>${esc(r.d)}</td><td style="text-align:left">${esc(r.f)}</td><td style="text-align:left">${esc(r.c)}</td><td style="text-align:left">${esc(r.l)}</td><td>${fmt(a.n)}</td><td>${fmt(a.kg, 1)}</td><td>${a.n ? fmt(a.kg / a.n, 1) : '–'}</td>${B.map(b => `<td>${a[b.k].n || '–'}</td>`).join('')}<td title="${esc(rs.filter(x => !x.cnt).map(x => x.w + ' kg ' + x.note).join('\n'))}">${rs.length - c.length || '–'}</td><td style="text-align:left" class="muted">${esc(r.file)}</td><td><button class="btn sm" data-edit="${esc(r.id)}">Edit</button></td></tr>` }).join('')
+      : `<tr><td colspan="14" class="muted">No loads yet.</td></tr>`);
+}
+
+/* ---------- upload / parse ---------- */
+function titleCase(s) { return s.toLowerCase().replace(/\b([a-z])/g, c => c.toUpperCase()).replace(/\bJr\b\.?/i, 'Jr.').replace(/\b(Mmfi|Nvm|Mmei|Mmdc|Mmhi|Mmhc|Mgt)\b/g, x => x.toUpperCase()) }
+function knownCustomer(raw) {
+  const n = norm(raw); if (!n) return '';
+  const custs = [...new Set(ALL.map(r => r.c).concat(pending.map(p => p.customer)))].filter(Boolean);
+  return custs.find(c => norm(c) === n) || custs.find(c => norm(c).startsWith(n) || n.startsWith(norm(c))) || '';
+}
+function truckCustomer(truck) {
+  const hits = ALL.filter(r => norm(r.l) === norm(truck) && r.c).sort((a, b) => b.d.localeCompare(a.d));
+  return hits[0] ? hits[0].c : '';
+}
+const isPlate = s => /^([A-Z]{2,3}\s?\d{3,4}|\d{5,7})$/i.test(s.trim());
+
+function parseName(name) {
+  let base = name.replace(/\.(xlsx?|csv)$/i, '').replace(/^[0-9a-f]{8}-/i, '');
+  const m = base.match(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4,5})/);
+  let md = null; if (m) { md = { m: +m[1], d: +m[2], y: +m[3].slice(0, 4) }; base = base.replace(m[0], ''); }
+  let tag = base.replace(/[_]+/g, ' ').replace(/\s+/g, ' ').replace(/^[\s.\-]+|[\s.\-]+$/g, '').trim();
+  const sfx = tag.match(/^(.*\d{3,})\s+\d$/); if (sfx && !/^MMFI\s+\d$/i.test(tag)) tag = sfx[1]; // drop " 1" copy suffix after a plate
+  let customer = '', truck = '';
+  if (/^MMFI\b/i.test(tag)) { customer = 'MMFI'; truck = tag.slice(4).trim(); if (/^\d$/.test(truck)) truck = 'Load ' + truck; }
+  else if (isPlate(tag)) { truck = tag.toUpperCase(); }
+  else customer = tag;
+  return { md, customer, truck };
+}
+
+function parseDateCell(v, md) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') { const p = XLSX.SSF.parse_date_code(v); return p ? { y: p.y, m: p.m, d: p.d } : null; }
+  const p = String(v).trim().split(/[\/\-.]/).map(Number);
+  if (p.length < 3) return null;
+  let [a, b, y] = p; if (String(p[0]).length === 4) { y = p[0]; a = p[1]; b = p[2]; return { y, m: a, d: b }; }
+  if (md && md.m === b && md.d === a) return { y, m: b, d: a };
+  if (a > 12) return { y, m: b, d: a };
+  return { y, m: a, d: b };
+}
+
+async function readFile(file) {
+  const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+  const hdr = (aoa[0] || []).map(x => String(x).trim().toLowerCase());
+  let iw = hdr.indexOf('weight'), id = hdr.indexOf('date'), it = hdr.indexOf('time');
+  if (iw < 0) { iw = 1; id = 2; it = 3; }
+  const nm = parseName(file.name);
+  const readings = []; let dt = null;
+  aoa.slice(1).forEach(r => {
+    const w = parseFloat(String(r[iw]).replace(/,/g, ''));
+    const extra = r.filter((x, i) => i > Math.max(iw, id, it) && String(x).trim()).join(' ').trim();
+    if (isNaN(w)) { if (extra && readings.length) readings[readings.length - 1].note = (readings[readings.length - 1].note + ' ' + extra).trim(); return; }
+    const d = parseDateCell(r[id], nm.md); if (d) dt = dt || d;
+    let t = r[it]; if (typeof t === 'number') t = XLSX.SSF.format('h:mm:ss AM/PM', t);
+    const x = { w, time: String(t || '').trim(), note: extra, counted: true, flag: '' };
+    if (w < 10) { x.counted = false; x.flag = 'Looks like a scale misread'; }
+    else if (!x.time && !d) x.flag = 'No date/time — added by hand';
+    else if (extra) x.flag = 'Has a note';
+    if (w > 250) { x.counted = false; x.flag = 'Unusually heavy — check'; }
+    readings.push(x);
+  });
+  const ymdOf = o => `${o.y}-${String(o.m).padStart(2, '0')}-${String(o.d).padStart(2, '0')}`;
+  const date = dt ? ymdOf(dt) : nm.md ? ymdOf(nm.md) : ymd(new Date());
+  let customer = nm.customer ? (knownCustomer(nm.customer) || titleCase(nm.customer)) : '';
+  if (!customer && nm.truck) customer = truckCustomer(nm.truck);
+  const sum = readings.reduce((s, x) => s + x.w, 0);
+  const key = [date, readings.length, sum.toFixed(1), readings[0] ? readings[0].time : '', readings.length ? readings[readings.length - 1].time : ''].join('|');
+  return { id: 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), key, file: file.name, date, farm: $('upFarm').value, customer, truck: nm.truck, readings, guessed: !nm.customer && !!customer };
+}
+
+async function addFiles(files) {
+  for (const f of files) {
+    try { const L = await readFile(f); if (!L.readings.length) { msg(`${esc(f.name)}: no weights found.`, 'err'); continue } pending.push(L); }
+    catch (e) { msg(`Could not read ${esc(f.name)}: ${esc(e.message)}`, 'err'); }
+  }
+  pending.forEach(L => { if (!L.customer && L.truck) { const m = pending.find(P => P !== L && P.customer && norm(P.truck) === norm(L.truck)); if (m) { L.customer = m.customer; L.guessed = true; } } });
+  renderPending();
+}
+
+function renderPending() {
+  const keys = new Set(ALL.map(r => r.key));
+  $('pending').innerHTML = pending.map((L, i) => {
+    const c = L.readings.filter(x => x.counted), a = { n: c.length, kg: c.reduce((s, x) => s + x.w, 0) };
+    const bc = B.map(b => `<span class="chip">${b.s}: <b>${c.filter(x => b.t(x.w)).length}</b></span>`).join('');
+    const dup = keys.has(L.key) || pending.some((P, j) => j < i && P.key === L.key);
+    return `<div class="lc${dup ? ' dup' : ''}" data-i="${i}">
+      <h3><span>${esc(L.file)}</span><button class="btn sm" data-rm="${i}">Remove</button></h3>
+      ${dup ? `<div class="flag" style="background:none;color:var(--bad);padding:0 0 6px">Already in the Google Sheet (same date, heads, weights and times) — it will be skipped.</div>` : ''}
+      <div class="fld">
+        <label>Date <input type="date" data-f="date" value="${esc(L.date)}"></label>
+        <label>Farm <input data-f="farm" list="dlFarms" value="${esc(L.farm)}"></label>
+        <label>Customer${!L.customer ? ' <b style="color:var(--bad)">— required</b>' : L.guessed ? ' <i>(from truck history)</i>' : ''} <input data-f="customer" list="dlCusts" value="${esc(L.customer)}"></label>
+        <label>Truck / load <input data-f="truck" value="${esc(L.truck)}"></label>
+      </div>
+      <div class="chips"><span class="chip"><b>${fmt(a.n)}</b> heads</span><span class="chip">${fmt(a.kg, 1)} kg</span><span class="chip">avg ${a.n ? fmt(a.kg / a.n, 1) : '–'}</span>${bc}</div>
+      ${L.readings.map((x, j) => x.flag ? `<label class="flag"><input type="checkbox" data-r="${j}" ${x.counted ? 'checked' : ''}><span><b>${x.w} kg</b> ${esc(x.time)} — ${esc(x.flag)}${x.note ? ': “' + esc(x.note) + '”' : ''}. <span class="muted">Ticked = counted.</span></span></label>` : '').join('')}
+    </div>`;
+  }).join('');
+  const n = pending.length;
+  $('bSave').disabled = !n || !API; $('bDiscard').disabled = !n;
+  $('pendInfo').textContent = n ? `${n} file${n > 1 ? 's' : ''} ready · ${fmt(pending.reduce((s, L) => s + L.readings.filter(x => x.counted).length, 0))} heads` + (API ? '' : ' · connect the Google Sheet in ⚙ Settings first') : '';
+}
+
+$('pending').addEventListener('input', e => {
+  const card = e.target.closest('.lc'); if (!card) return; const L = pending[+card.dataset.i];
+  if (e.target.dataset.f) { L[e.target.dataset.f] = e.target.value; if (e.target.dataset.f === 'customer') L.guessed = false; }
+  if (e.target.dataset.r != null) { L.readings[+e.target.dataset.r].counted = e.target.checked; renderPending(); }
+});
+$('pending').addEventListener('change', e => { if (e.target.dataset.f) renderPending(); });
+$('pending').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { pending.splice(+b.dataset.rm, 1); renderPending(); } });
+
+async function post(body) {
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'Save failed'); return j;
+}
+
+$('bSave').onclick = async () => {
+  const miss = pending.filter(L => !L.customer.trim() || !L.farm.trim() || !L.date);
+  if (miss.length) { msg('Fill in date, farm and customer for: ' + miss.map(L => esc(L.file)).join(', '), 'err'); return; }
+  $('bSave').disabled = true; $('bSave').textContent = 'Saving…';
+  try {
+    const loads = pending.map(L => ({ id: L.id, key: L.key, date: L.date, farm: L.farm.trim(), customer: L.customer.trim(), truck: (L.truck || '').trim(), file: L.file,
+      readings: L.readings.map(x => ({ w: x.w, time: x.time, counted: x.counted, note: [x.flag && !x.counted ? x.flag : '', x.note].filter(Boolean).join(' — ') })) }));
+    const j = await post({ action: 'add', loads });
+    const farms = JSON.parse(store.get('hwb_farms', '["Kinate","Mapayag"]')); pending.forEach(L => farms.includes(L.farm) || farms.push(L.farm)); store.set('hwb_farms', JSON.stringify(farms));
+    pending = []; renderPending();
+    msg(`Saved ${j.added.length} file(s), ${fmt(j.rows)} readings.` + (j.skipped.length ? ` Skipped as duplicates: ${j.skipped.map(esc).join(', ')}.` : ''), 'ok');
+    await load(); setView('cust');
+  } catch (e) { msg('Save failed: ' + esc(e.message), 'err'); }
+  $('bSave').textContent = 'Save to Google Sheet'; renderPending();
+};
+$('bDiscard').onclick = () => { pending = []; renderPending(); };
+
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+$('file').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over') }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over') }));
+drop.addEventListener('drop', e => addFiles([...e.dataTransfer.files]));
+$('upFarm').onchange = e => { store.set('hwb_lastFarm', e.target.value); pending.forEach(L => L.farm = e.target.value); renderPending(); };
+$('bNewFarm').onclick = () => {
+  const n = (window.prompt ? prompt('New farm name') : '') || ''; if (!n.trim()) return;
+  const farms = JSON.parse(store.get('hwb_farms', '["Kinate","Mapayag"]')); if (!farms.includes(n.trim())) farms.push(n.trim());
+  store.set('hwb_farms', JSON.stringify(farms)); store.set('hwb_lastFarm', n.trim()); fillFilters(); $('upFarm').value = n.trim(); $('upFarm').onchange({ target: $('upFarm') });
+};
+
+/* ---------- edit / delete load ---------- */
+let editId = null;
+$('tl').addEventListener('click', e => {
+  const b = e.target.closest('[data-edit]'); if (!b) return;
+  editId = b.dataset.edit; const r = ALL.find(x => x.id === editId);
+  $('eDate').value = r.d; $('eFarm').value = r.f; $('eCust').value = r.c; $('eTruck').value = r.l; $('dlgEdit').showModal();
+});
+$('eCancel').onclick = () => $('dlgEdit').close();
+$('eSave').onclick = async () => {
+  try { await post({ action: 'update', id: editId, date: $('eDate').value, farm: $('eFarm').value.trim(), customer: $('eCust').value.trim(), truck: $('eTruck').value.trim() });
+    $('dlgEdit').close(); msg('Load updated.', 'ok'); await load(); } catch (e) { msg('Update failed: ' + esc(e.message), 'err'); }
+};
+$('eDel').onclick = async () => {
+  if ($('eDel').dataset.sure !== '1') { $('eDel').dataset.sure = '1'; $('eDel').textContent = 'Tap again to delete'; return; }
+  $('eDel').dataset.sure = ''; $('eDel').textContent = 'Delete load';
+  try { await post({ action: 'delete', id: editId }); $('dlgEdit').close(); msg('Load deleted.', 'ok'); await load(); } catch (e) { msg('Delete failed: ' + esc(e.message), 'err'); }
+};
+$('dlgEdit').addEventListener('close', () => { $('eDel').dataset.sure = ''; $('eDel').textContent = 'Delete load'; });
+
+/* ---------- settings ---------- */
+$('bSettings').onclick = () => { $('sUrl').value = API; $('dlgSet').showModal(); };
+$('sCancel').onclick = () => $('dlgSet').close();
+$('sSave').onclick = () => { API = $('sUrl').value.trim(); store.set('hwb_api', API); $('dlgSet').close(); load(); renderPending(); };
+
+/* ---------- excel export ---------- */
+$('bExcel').onclick = () => {
+  const R = rows(); if (!R.length) { msg('Nothing to export for this filter.', 'err'); return; }
+  const wb = XLSX.utils.book_new(), T = agg(R), bandCols = a => B.flatMap(b => [a[b.k].n, +a[b.k].kg.toFixed(1)]);
+  const H = ['Heads', 'Total kg', 'Avg kg', ...B.flatMap(b => [b.s + ' heads', b.s + ' kg'])];
+  const line = (lab, a) => [lab, a.n, +a.kg.toFixed(1), a.n ? +(a.kg / a.n).toFixed(2) : '', ...bandCols(a)];
+  const farms = [...new Set(R.map(r => r.f))].sort();
+  const s1 = [['Weight band summary', `${$('sub').textContent}`], [], ['Band', ...farms, 'Total heads', 'Share', 'Total kg', 'Avg kg']];
+  B.forEach(b => { const rs = R.filter(r => r.b === b.k), a = agg(rs); s1.push([b.n, ...farms.map(f => rs.filter(r => r.f === f).length), a.n, T.n ? +(a.n / T.n).toFixed(4) : 0, +a.kg.toFixed(1), a.n ? +(a.kg / a.n).toFixed(2) : '']) });
+  s1.push(['Total', ...farms.map(f => R.filter(r => r.f === f).length), T.n, 1, +T.kg.toFixed(1), T.n ? +(T.kg / T.n).toFixed(2) : '']);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1), 'Summary');
+  const outline = (levels, title) => {
+    const aoa = [[title, ...H]], rp = [{}];
+    (function walk(rs, depth) { const L = levels[depth], m = grp(rs, L.key);
+      [...m.keys()].sort((a, b) => L.sort ? L.sort(a, b, m) : String(a).localeCompare(String(b))).forEach(v => { const sub = m.get(v);
+        aoa.push(line('   '.repeat(depth) + L.lab(v, sub), agg(sub))); rp.push(depth ? { level: depth, hidden: false } : {});
+        if (depth < levels.length - 1) walk(sub, depth + 1) }) })(R, 0);
+    aoa.push(line('Grand total', T)); rp.push({});
+    const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!rows'] = rp; ws['!cols'] = [{ wch: 34 }]; return ws;
+  };
+  XLSX.utils.book_append_sheet(wb, outline([LV.farm, LV.cust, LV.loadD], 'Farm / Customer / Load'), 'By customer');
+  XLSX.utils.book_append_sheet(wb, outline([LV.date, LV.farm, LV.cust, LV.load], 'Date / Farm / Customer / Load'), 'By date');
+  const ws4 = XLSX.utils.aoa_to_sheet([['Date', 'Farm', 'Customer', 'Truck / Load', 'Weight (kg)', 'Time', 'Band', 'Source file'], ...R.map(r => [r.d, r.f, r.c, r.l, r.w, r.t, B.find(b => b.k === r.b).s, r.file])]);
+  XLSX.utils.book_append_sheet(wb, ws4, 'Weights');
+  const ds = [...new Set(R.map(r => r.d))].sort();
+  XLSX.writeFile(wb, `Weight_Band_Summary_${ds[0]}_to_${ds[ds.length - 1]}.xlsx`);
+};
+
+/* ---------- wiring ---------- */
+function setView(v) { view = v; open.clear(); document.querySelectorAll('#tabs [data-v]').forEach(x => x.classList.toggle('on', x.dataset.v === v)); render(); }
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) setView(b.dataset.v); });
+$('tools').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.m) { mode = b.dataset.m; document.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x === b)); }
+  if (b.id === 'bExp') { for (let i = 0; i < 4; i++) { render(); document.querySelectorAll('#t tr.hasKids').forEach(tr => open.add(tr.dataset.id)); } }
+  if (b.id === 'bCol') open.clear();
+  render();
+});
+$('t').addEventListener('click', e => { const tr = e.target.closest('tr.hasKids'); if (!tr) return; const id = tr.dataset.id;
+  if (open.has(id)) [...open].forEach(o => { if (o === id || o.startsWith(id + '|')) open.delete(o) }); else open.add(id); render(); });
+['fFrom', 'fTo', 'fFarm', 'fCust'].forEach(id => $(id).addEventListener('change', render));
+$('bClear').onclick = () => { ['fFrom', 'fTo', 'fFarm', 'fCust'].forEach(id => $(id).value = ''); render(); };
+$('bRefresh').onclick = load;
+fillFilters(); load();
+</script>
+</body>
+</html>
